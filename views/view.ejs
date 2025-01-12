@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/output.css">
+  <title>Processed Data</title>
+</head>
+<body>
+  
+  <div class="max-w-lg mx-auto">
+    <h1>Processed Data</h1>
+    <div class=" overflow-x-auto mt-4">
+      <table 
+      class="w-full text-sm border text-left rtl:text-right text-gray-500 dark:text-gray-400"
+     >
+          <thead
+          class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400"
+          >
+            <tr
+            scope="col" class="px-6 py-3"
+            >
+              <% if (data[0]) { %>
+                <% data[0].forEach((header) => { %>
+                  <th><%= header %></th>
+                <% }); %>
+              <% } %>
+            </tr>
+          </thead>
+          <tbody>
+            <% data.slice(1).forEach((row) => { %>
+              <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                <% row.forEach((cell) => { %>
+                  <td
+                  scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+                  ><%= cell %></td>
+                <% }); %>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+    </div>
+    <a href="/download">Download Excel</a>
+  </div>
+ 
+
+
+ 
+
+</body>
+</html>
