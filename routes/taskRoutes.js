@@ -10,5 +10,5 @@ const upload = multer({ dest: 'uploads/' });
 router.get('/', taskController.index);
 router.get('/upload', taskController.uploadForm);
 // router.post('/convert', upload.single('textfile'), taskController.converTextToExcel);
-router.post("/converts", upload.array("textfile", 10), taskController.converTextToExcelWithMutiple)
+router.post("/converts", upload.array("textfile", 20), taskController.converTextToExcelWithMutiple)
 module.exports = router;

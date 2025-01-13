@@ -1,7 +1,7 @@
 const fs = require('fs')
 
 const path = require('path');
-const { data } = require('autoprefixer');
+
 
 const ExcelJS = require("exceljs");
 const { time } = require('console');
@@ -61,31 +61,40 @@ function checkFileName(filename , keyword){
 
 const transformData = (data) => {
     const result = [];
-    const routes = data.slice(0, 2);
-    const ids = data.slice(2, 6);
-    const names = data.slice(6);
+    const sectorFlights = data.slice(0, 2);
+    const ticketNumbers = data.slice(2, 6);
+    const paxNames = data.slice(6);
   
-    for (let i = 0; i < ids.length; i++) {
-      const id = ids[i][0].slice(0, 9); // Take the first 9 characters of the ID
-      const name = names[i]?.[0] || ""; // Handle missing names gracefully
-      const route = routes[i]?.[0] || ""; // Handle missing routes gracefully
-  
-      result.push([id, name, route]);
+    for (let i = 0; i < ticketNumbers.length; i++) {
+      const ticketNumber = ticketNumbers[i][0].slice(0, 9); // Take the first 9 characters of the ID
+      const paxName = paxNames[i]?.[0] || ""; // Handle missing names gracefully
+      const sectorFlight = sectorFlights[i]?.[0] || ""; // Handle missing routes gracefully
+      result.push([ticketNumber,paxName,sectorFlight].filter(Boolean));
     }
   
     return result;
   };
+
+  function processRows(rows, regex) {
+    return rows.map((row) => row.filter((value) => regex.test(value)));
+}
+
 
 exports.converTextToExcelWithMutiple = async (req, res) => {
     try {
         const files = req.files;
         const workbook = new ExcelJS.Workbook();
         const sheet = workbook.addWorksheet("Text Data");
-        var SectorFlight = []
-        var PaxName = [];
-        var TicketNumber = []
+        var rowValues = []
+        var ticketNumber = [];
+        const regexPatterns = {
+            resODflight: /^[A-Z]{3}$/, // Matches a sector/flight code
+            resPassenger: /^[A-Z]+ [A-Z]+$/, // Matches a passenger name
+            tktCouponHistory: /^\d{13}$/, // Matches a 13-digit ticket number
+            tktEndorsement: /^\d{13}$/, // Matches a 13-digit endorsement
+        };
 
-      
+
         // Process each text file
         const columnName = ['TicketNumber', "PaxName", "SectorFligth"]
         sheet.addRow(columnName)
@@ -96,25 +105,34 @@ exports.converTextToExcelWithMutiple = async (req, res) => {
             .split("\n")
             .filter((line) => line.trim() !== "")
             .map((line) => line.split("|").map((item) => item.trim())); // Assuming comma-separated values
-        //   allData.push(...rows);
+        
           if(checkFileName(file.originalname , 'resODflight')){
-                const regex = /^[A-Z]{3}$/;
-                const concanateSectorFlight = rows.map((i)=> [i.filter(value => regex.test(value)).join('->')])
-                concanateSectorFlight.forEach((value)=> allData.push(value))
+            const processedRows = processRows(rows , regexPatterns.resODflight);
+            processedRows.forEach((value)=> {
+                const sectorFlight = value.join('')
+                rowValues[2] = sectorFlight
+                sheet.insertRow(2, [...rowValues])
+            })
+               
             } else if (checkFileName(file.originalname , 'resPassenger')){
-                const regex = /^[A-Z]+ [A-Z]+$/;
-                const filterDatePassergener = rows.map(i => [i.filter(value => regex.test(value)).join("")])
-                     console.log("passenger", filterDatePassergener)
-                filterDatePassergener.forEach((value)=> allData.push(value))
+                const processedRows = processRows(rows , regexPatterns.resPassenger);
+                processedRows.forEach((value)=> {
+                    const passengerName = value.join('')
+                    rowValues[1] = passengerName
+                    sheet.insertRow(2, [...rowValues])
+
+                })
             } else if (checkFileName(file.originalname, 'tktCouponHistory')){
-                const regex = /^\d{13}$/;
-               const tktCouponHistoryFilter = rows.map((i)=> i.filter(value => regex.test(value)))
-               tktCouponHistoryFilter.forEach((value)=> allData.push(value))
+                const processedRows = processRows(rows, regexPatterns.tktCouponHistory)
+                processedRows.forEach((value)=> {
+                   sheet.addRow(value)
+                })
              }else if (checkFileName(file.originalname, 'tktEndorsement')){
-                const regex = /^\d{13}$/;
-                const tktEndorsementFilter = rows.map((i)=> i.filter(value => regex.test(value)));
-                tktEndorsementFilter.forEach((value)=> allData.push(value))
-                
+                const processedRows = processRows(rows , regexPatterns.tktEndorsement)
+                console.log(processedRows)
+                processedRows.forEach((value)=> {
+                    sheet.addRow(value)
+                })   
              }else {
                 console.log("No file name match")
             }
@@ -122,13 +140,15 @@ exports.converTextToExcelWithMutiple = async (req, res) => {
         }
 
    
-    
-        // console.log(allData)
+        //ticketnumber to row
+        // sheet.addRow(ticketNumber)
+        console.log(allData)
         // swap data for all Data
-        const swapData = transformData(allData);
+        // sheet.addRow(allData)
+        // const swapData = transformData(allData);
         // console.log(swapData);
         // Add data to the Excel sheet
-        sheet.addRows(swapData);
+        // sheet.addRows(swapData);
 
         
         //apply alternating row colors
@@ -156,7 +176,7 @@ exports.converTextToExcelWithMutiple = async (req, res) => {
             })
         })
 
-        
+      
     
        const headerRow = sheet.getRow(1); //Asumming the first row is the header
        headerRow.eachCell((cell)=> {
@@ -168,20 +188,11 @@ exports.converTextToExcelWithMutiple = async (req, res) => {
         };
         cell.alignment = {vertical : "middle", horizontal: "center"};
        })
-
-
        sheet.columns.forEach((column)=> {
-        column.width = column.values.length * 2
+        column.width = 20
         // column.width = Math.max(...column.values.map((val)=> (val ? val.toString().length: 100 ))) + 2;
        });
-
        //if colum is found, delete it
-      
-
-
-    
-        
-
         // Define a file path for the generated Excel file
         const outputPath = path.join(__dirname, "../public", "output.xlsx");
       
