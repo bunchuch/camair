@@ -58,6 +58,23 @@ function checkFileName(filename , keyword){
     return lowerFileName.includes(lowerKeyword)
 }
 
+const transformData = (data) => {
+    const result = [];
+    const routes = data.slice(0, 2);
+    const ids = data.slice(2, 6);
+    const names = data.slice(6);
+  
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i][0].slice(0, 9); // Take the first 9 characters of the ID
+      const name = names[i]?.[0] || ""; // Handle missing names gracefully
+      const route = routes[i]?.[0] || ""; // Handle missing routes gracefully
+  
+      result.push([id, name, route]);
+    }
+  
+    return result;
+  };
+
 exports.converTextToExcelWithMutiple = async (req, res) => {
     try {
         const files = req.files;
@@ -82,33 +99,37 @@ exports.converTextToExcelWithMutiple = async (req, res) => {
           if(checkFileName(file.originalname , 'resODflight')){
                 const regex = /^[A-Z]{3}$/;
                 const concanateSectorFlight = rows.map((i)=> [i.filter(value => regex.test(value)).join('->')])
-                console.log("sectorFlight",concanateSectorFlight)
-                concanateSectorFlight.forEach((value , index)=> sheet.getRow(3) = value)
+                concanateSectorFlight.forEach((value)=> allData.push(value))
             } else if (checkFileName(file.originalname , 'resPassenger')){
                 const regex = /^[A-Z]+ [A-Z]+$/;
                 const filterDatePassergener = rows.map(i => [i.filter(value => regex.test(value)).join("")])
                      console.log("passenger", filterDatePassergener)
+                filterDatePassergener.forEach((value)=> allData.push(value))
             } else if (checkFileName(file.originalname, 'tktCouponHistory')){
                 const regex = /^\d{13}$/;
-                console.log("PaxName", rows.map((i)=> i.filter(value => regex.test(value))))
+               const tktCouponHistoryFilter = rows.map((i)=> i.filter(value => regex.test(value)))
+               tktCouponHistoryFilter.forEach((value)=> allData.push(value))
              }else if (checkFileName(file.originalname, 'tktEndorsement')){
                 const regex = /^\d{13}$/;
-                console.log("PaxNameTkEnd", rows.map((i)=> i.filter(value => regex.test(value))));
+                const tktEndorsementFilter = rows.map((i)=> i.filter(value => regex.test(value)));
+                tktEndorsementFilter.forEach((value)=> allData.push(value))
+                
              }else {
                 console.log("No file name match")
             }
-          fs.unlinkSync(file.path); // Clean up uploaded file
+            fs.unlinkSync(file.path); // Clean up uploaded file
         }
 
    
     
-        // console.log(allData)
-    
+        console.log(allData)
+        
+        const swapData = transformData(allData);
+        console.log(swapData);
         // Add data to the Excel sheet
-        sheet.addRows(allData);
+        sheet.addRows(swapData);
 
         
-   
         //apply alternating row colors
         sheet.eachRow((row, rowIndex)=> {
             row.eachCell((cell)=> {
