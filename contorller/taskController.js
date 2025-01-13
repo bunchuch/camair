@@ -1,9 +1,10 @@
 const fs = require('fs')
-const xlsx = require("xlsx")
+
 const path = require('path');
 const { data } = require('autoprefixer');
 
 const ExcelJS = require("exceljs");
+const { time } = require('console');
 // TicketNumber/ PaxName /SectorFlight.
 
 exports.index = (req ,res) => {
@@ -15,39 +16,39 @@ exports.uploadForm = (req ,res) => {
      res.render('upload', {title : "upload text file"});
 }
 
-exports.converTextToExcel = (req, res) => {
-    try {
-        const textFilePath = req.file.path;
-        const filename = req.file.originalname
-        const textData = fs.readFileSync(textFilePath, 'utf-8');
-        const rows = textData.split('\n').map(row => row.split('|'));
+// exports.converTextToExcel = (req, res) => {
+//     try {
+//         const textFilePath = req.file.path;
+//         const filename = req.file.originalname
+//         const textData = fs.readFileSync(textFilePath, 'utf-8');
+//         const rows = textData.split('\n').map(row => row.split('|'));
 
-        const columnName = ['TicketNumber', "PaxName", "SectorFligth"]
-        rows.unshift(columnName)
+//         const columnName = ['TicketNumber', "PaxName", "SectorFligth"]
+//         rows.unshift(columnName)
 
         
-        xlsx.utils.book_append_sheet(workbook , worksheet ,"Sheet1");
-        const getfilename = filename.replace(/(@|\.txt)/g, '').trim();
-        const excelFilePath = path.join(__dirname , '../public', `${getfilename}.xlsx`);
-        xlsx.writeFile(workbook , excelFilePath);
+//         xlsx.utils.book_append_sheet(workbook , worksheet ,"Sheet1");
+//         const getfilename = filename.replace(/(@|\.txt)/g, '').trim();
+//         const excelFilePath = path.join(__dirname , '../public', `${getfilename}.xlsx`);
+//         xlsx.writeFile(workbook , excelFilePath);
 
-        // res.send(`
-        //     <h1>Excel file created successfully!</h1>
-        //     <a href="/${excelFilePath}" download>Download Excel File</a>
-        // `);
+//         // res.send(`
+//         //     <h1>Excel file created successfully!</h1>
+//         //     <a href="/${excelFilePath}" download>Download Excel File</a>
+//         // `);
 
-        // res.download(excelFilePath , `${getfilename}.xlsx`, (err)=> {
-        //     if(err) throw err
-        //     fs.unlinkSync(textFilePath);
-        //     fs.unlinkSync(excelFilePath)
-        // });
+//         // res.download(excelFilePath , `${getfilename}.xlsx`, (err)=> {
+//         //     if(err) throw err
+//         //     fs.unlinkSync(textFilePath);
+//         //     fs.unlinkSync(excelFilePath)
+//         // });
 
-        res.render("table", {data: data})
-    } catch (error) {
-        console.log(error)
-        res.status(500).send("Error processing file");
-    }
-}
+//         res.render("table", {data: data})
+//     } catch (error) {
+//         console.log(error)
+//         res.status(500).send("Error processing file");
+//     }
+// }
 
 
 function checkFileName(filename , keyword){
@@ -122,10 +123,10 @@ exports.converTextToExcelWithMutiple = async (req, res) => {
 
    
     
-        console.log(allData)
-        
+        // console.log(allData)
+        // swap data for all Data
         const swapData = transformData(allData);
-        console.log(swapData);
+        // console.log(swapData);
         // Add data to the Excel sheet
         sheet.addRows(swapData);
 
@@ -170,7 +171,7 @@ exports.converTextToExcelWithMutiple = async (req, res) => {
 
 
        sheet.columns.forEach((column)=> {
-        column.width = column.values.length + 5
+        column.width = column.values.length * 2
         // column.width = Math.max(...column.values.map((val)=> (val ? val.toString().length: 100 ))) + 2;
        });
 
@@ -186,11 +187,11 @@ exports.converTextToExcelWithMutiple = async (req, res) => {
       
         // Write the Excel file to disk
         await  workbook.xlsx.writeFile(outputPath);
-      
+        const fileName = Date.now();
     //    res.render("view", {data: allData})
-
-        // Send the Excel file as a downloadable response
-        res.download(outputPath, "converted.xlsx", (err) => {
+       //console.log(fileName)
+       // Send the Excel file as a downloadable response
+        res.download(outputPath, `${fileName}.xlsx`, (err) => {
           if (err) {
             console.error("File download error:", err);
           }
