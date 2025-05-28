@@ -19,19 +19,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', homeRoutes);
 app.use('/task', taskRoutes);
 
-
-
-
-
-
-
-  
-
-
-
-
-
-
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
